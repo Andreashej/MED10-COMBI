@@ -28,18 +28,18 @@ class DQNAgent:
     def create_model(self, input_dim):
         model = Sequential()
 
-        model.add(Dense(10, activation='relu', input_dim=input_dim))
-        model.add(Dropout(0.2))
+        model.add(Dense(24, activation='relu', input_dim=input_dim))
+        # model.add(Dropout(0.2))
         
-        model.add(Dense(4, activation='relu'))
-        model.add(Dropout(0.2))
+        model.add(Dense(48, activation='relu'))
+        # model.add(Dropout(0.2))
 
-        model.add(Dense(6, activation='relu'))
-        model.add(Dropout(0.2))
+        model.add(Dense(24, activation='relu'))
+        # model.add(Dropout(0.2))
 
         model.add(Dense(1, activation='linear'))
 
-        model.compile(loss='mse', optimizer=Adam(lr=0.001), metrics=['accuracy'])
+        model.compile(loss='mse', optimizer=Adam(lr=0.001))
 
         return model
     
@@ -86,7 +86,7 @@ class DQNAgent:
         X = np.array(X).reshape((-1,6))
         Y = np.array(Y)
 
-        self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False)
+        self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=1, shuffle=False, epochs=1)
 
         if terminal_state:
             self.target_update_counter += 1
