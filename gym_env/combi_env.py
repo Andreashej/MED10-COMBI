@@ -64,3 +64,6 @@ class CombiEnv(gym.Env):
                 taskcount += 1
         
         return taskcount
+    
+    def available_actions(self):
+        return [self.action_space.sample() for _ in range(0,10)]
