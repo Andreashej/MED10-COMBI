@@ -62,20 +62,21 @@ class DQNAgent:
 
         return self.model.predict(features)
     
-    def train(self, terminal_state, step):
-        if len(self.replay_memory) < MIN_REPLAY_MEMORY_SIZE:
+    def train(self, terminal_state, actions):
+        if len(self.replay_memory) < MINIBATCH_SIZE:
             return
         
         minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)
 
-        future_qs_list = np.array([self.get_q(transition[3], transition[1]) for transition in minibatch])
+        # future_qs_list = np.array([self.get_q(transition[3], transition[1]) for transition in minibatch])
 
         X = []
         Y = []
 
-        for index, (current_state, action, reward, new_current_state, done) in enumerate(minibatch):
+        for (current_state, action, reward, new_current_state, done) in minibatch:
             if not done:
-                max_future_q = np.max(future_qs_list)
+                # Compute the maximum Q based on the updated state and the available actions
+                max_future_q = np.max(self.get_qs(new_current_state, actions))
                 new_q = reward + DISCOUNT * max_future_q
             else:
                 new_q = reward
@@ -86,7 +87,7 @@ class DQNAgent:
         X = np.array(X).reshape((-1,6))
         Y = np.array(Y)
 
-        self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=1, shuffle=False, epochs=1)
+        self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)
 
         if terminal_state:
             self.target_update_counter += 1
