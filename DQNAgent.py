@@ -7,7 +7,7 @@ import numpy as np
 import random
 import time
 
-from config import DISCOUNT, REPLAY_MEMORY_SIZE, MIN_REPLAY_MEMORY_SIZE, MINIBATCH_SIZE, UPDATE_TARGET_EVERY, MODEL_NAME
+from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE, UPDATE_TARGET_EVERY, MODEL_NAME
 
 class DQNAgent:
     def __init__(self, env):
@@ -76,6 +76,7 @@ class DQNAgent:
         for (current_state, action, reward, new_current_state, done) in minibatch:
             if not done:
                 # Compute the maximum Q based on the updated state and the available actions
+                # This is very slow - even with just 10 actions
                 max_future_q = np.max(self.get_qs(new_current_state, actions))
                 new_q = reward + DISCOUNT * max_future_q
             else:
