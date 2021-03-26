@@ -7,6 +7,8 @@ from tqdm import tqdm
 import os
 import time
 from config import SHOW_PREVIEW, AGGREGATE_STATS_EVERY, EPSILON_DECAY, MIN_EPSILON, EPISODES, MIN_REWARD, MODEL_NAME
+from TaskProcessor import TaskList
+from CombiApi import api
 
 random.seed(1)
 np.random.seed(1)
@@ -21,6 +23,7 @@ ep_rewards = [MIN_REWARD]
 env = CombiEnv(500)
 agent = DQNAgent(env)
 
+tasklist = TaskList()
 
 for episode in tqdm(range(1, EPISODES +1), ascii=True, unit='episodes'):
     agent.tensorboard.step = episode
@@ -33,7 +36,7 @@ for episode in tqdm(range(1, EPISODES +1), ascii=True, unit='episodes'):
     done = False
 
     while not done:
-        available_actions = env.available_actions() # Search for eligible actions
+        available_actions = tasklist.get_available(200, agent.state['position'], agent.state['time'][0]) # Search for eligible actions
 
         if np.random.random() > epsilon:
             action_index = np.argmax(agent.get_qs(current_state, available_actions))

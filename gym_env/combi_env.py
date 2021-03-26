@@ -50,20 +50,3 @@ class CombiEnv(gym.Env):
 
     def render(self, mode='human', close=False):
         print (f"I am now at BIN {self.state['position']}. The time is {self.state['time'][0 ]}.")
-
-    @staticmethod
-    def bin_dist(source, destination):
-        return random.randint(0,100)
-    
-    @staticmethod
-    def tasks_in_radius(bin, radius, tasks):
-        taskcount = 0
-        for task in tasks:
-            dist = CombiEnv.bin_dist(bin, task['destination'])
-            if dist <= radius:
-                taskcount += 1
-        
-        return taskcount
-    
-    def available_actions(self):
-        return [self.action_space.sample() for _ in range(0,10)]

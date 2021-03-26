@@ -10,13 +10,10 @@ import time
 from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE, UPDATE_TARGET_EVERY, MODEL_NAME
 
 class DQNAgent:
-    def __init__(self, env):
-        action_space_size = len(env.action_space.spaces)
-        observation_space_size = len(env.observation_space.spaces)
+    def __init__(self, feature_space_size):
+        self.model = self.create_model(feature_space_size)
 
-        self.model = self.create_model(action_space_size + observation_space_size)
-
-        self.target_model = self.create_model(action_space_size + observation_space_size)
+        self.target_model = self.create_model(feature_space_size)
         self.target_model.set_weights(self.model.get_weights())
 
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
@@ -28,13 +25,13 @@ class DQNAgent:
     def create_model(self, input_dim):
         model = Sequential()
 
-        model.add(Dense(24, activation='relu', input_dim=input_dim))
+        model.add(Dense(12, activation='relu', input_dim=input_dim))
         # model.add(Dropout(0.2))
         
-        model.add(Dense(48, activation='relu'))
+        model.add(Dense(24, activation='relu'))
         # model.add(Dropout(0.2))
 
-        model.add(Dense(24, activation='relu'))
+        model.add(Dense(12, activation='relu'))
         # model.add(Dropout(0.2))
 
         model.add(Dense(1, activation='linear'))
