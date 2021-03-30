@@ -2,7 +2,6 @@ import csv
 import numpy as np
 import requests
 from tqdm import tqdm
-from fastcache import clru_cache
 
 class CombiApi:
   def __init__(self):
@@ -34,7 +33,6 @@ class CombiApi:
   def find_bin(self, value):
     return self.bins[value]
 
-  @clru_cache(maxsize=5000)
   def bin_dist(self, source, destination):
     response = requests.get(
       f"https://dkasq25c00.corp.lego.com:22032/sap/opu/odata/sap/Y25BIN_DISTANCE_SRV/Bin_DistSet(BinIdFr='{source.id}',BinIdTo='{destination.id}')?$format=json", 
@@ -87,6 +85,8 @@ class CombiApi:
           self.bin_dist_lookup[fromIndex][toIndex] = dist
         except:
           pass
+  def max_dist(self):
+    return np.max(self.bin_dist_lookup)
 
 class Bin:
   def __init__(self, id, text, zone):

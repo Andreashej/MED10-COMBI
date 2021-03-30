@@ -5,7 +5,7 @@ MIN_REWARD = 0
 
 # Stats settings
 SHOW_PREVIEW = False
-AGGREGATE_STATS_EVERY = 50
+AGGREGATE_STATS_EVERY = 10
 
 # Exploration settings
 EPSILON_DECAY = 0.99975

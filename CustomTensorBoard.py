@@ -40,5 +40,5 @@ class CustomTensorBoard(TensorBoard):
         with self.writer.as_default():
             for name, value in logs.items():
                 tf.summary.scalar(name, value, step=index)
-                self.step += 1
-                self.writer.flush()
+            self.step += 1
+            self.writer.flush()

@@ -1,7 +1,7 @@
 
 import csv
 from tqdm import tqdm
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 import random
 from CombiApi import api
 
@@ -65,14 +65,24 @@ class TaskList:
                 mean_dist += api.bin_dist_cached(task.destination, s.source)
             mean_dist /= len(sample)
 
-            small.append(mean_dist) if sample_size < 1 else big.append(mean_dist)
-
             task.mean_distance_to_next = mean_dist
         
         return available_tasks
     
-    def pick(index):
+    def pick(self, index):
         self.tasks[index].done = True
+    
+    def speed(self):
+        bins_moved = 0
+        time_used = 0
+
+        for task in self.tasks:
+            bins_moved += task.distance
+            time_used += task.time
+        
+        speed = bins_moved / time_used
+
+        return speed
 
 
 
@@ -85,6 +95,7 @@ class Task:
         self.completed_at = kwargs.get('completed_at')
         self.temp_bin = kwargs.get('temp_bin')
         self.time = kwargs.get('time')
+        self.distance = api.bin_dist_cached(self.source, self.destination)
         self.done = False
         self.distance_to_start = None
         self.mean_distance_to_next = None
@@ -99,12 +110,21 @@ class Task:
             'time': self.time
         }
     
+    def to_action_dict(self):
+        return {
+            'source': api.find_index(self.source.id),
+            'destination': api.find_index(self.destination.id),
+            'time': [self.time],
+            'dist_to_start': [self.distance_to_start],
+            'mean_dist_to_next': [self.mean_distance_to_next],
+        }
+    
     @staticmethod
     def fieldnames():
         return ['vhu', 'source', 'destination', 'started_at', 'completed_at', 'time']
     
     def __repr__(self):
-        return f"<Move {self.vhu} from {self.source} to {self.destination}: Started at: {self.started_at}>"
+        return f"<Task: Move {self.vhu} from {self.source} to {self.destination}: Started at: {self.started_at}>"
 
 
 class TaskImporter:

@@ -9,6 +9,8 @@ import time
 
 from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE, UPDATE_TARGET_EVERY, MODEL_NAME
 
+from CombiApi import api
+
 class DQNAgent:
     def __init__(self, feature_space_size):
         self.model = self.create_model(feature_space_size)
@@ -21,6 +23,8 @@ class DQNAgent:
         self.tensorboard = CustomTensorBoard(log_dir=f"logs/{MODEL_NAME}-{int(time.time())}")
 
         self.target_update_counter = 0
+
+        self.max_dist = api.max_dist()
 
     def create_model(self, input_dim):
         model = Sequential()
@@ -44,10 +48,11 @@ class DQNAgent:
         self.replay_memory.append(transition)
 
     def get_features(self, state, action):
-        state_arr = np.array([state['position'], state['time'][0]])
-        action_arr = np.array([action['source'], action['destination'], action['time'][0], action['vicinity'][0]])
-
-        features = np.concatenate((state_arr, action_arr))
+        # Normalise features to converge faster
+        features = np.array([
+            action.distance_to_start / self.max_dist,
+            action.mean_distance_to_next / self.max_dist
+        ])
         
         return features.reshape(-1, *features.shape)
 
@@ -82,7 +87,7 @@ class DQNAgent:
             X.append(self.get_features(current_state, action))
             Y.append(new_q)
 
-        X = np.array(X).reshape((-1,6))
+        X = np.array(X).reshape((-1,2))
         Y = np.array(Y)
 
         self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)

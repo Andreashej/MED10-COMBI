@@ -6,6 +6,7 @@ import random
 IMMEDIATE_AWARD = 100 # Reward for completing a task
 ALPHA = 1 # Blend factor for how much travelling empty is penalised
 EPISODE_LENGTH = 36000 # Seconds
+SPEED = .5 # Used to estimate the time it takes to move to the start of a task, unit is BIN_DIST/s
 
 class CombiEnv(gym.Env):
 
@@ -19,25 +20,23 @@ class CombiEnv(gym.Env):
             'source': spaces.Discrete(bin_count), 
             'destination': spaces.Discrete(bin_count),
             'time': spaces.Box(np.array([60]), np.array([3600]), None, np.uint16),
-            'vicinity': spaces.Box(np.array([0]), np.array([100]), None, np.uint16)
+            'dist_to_start': spaces.Box(np.array([0]), np.array([8000]), None, np.uint16),
+            'mean_dist_to_next': spaces.Box(np.array([0]), np.array([8000]), None, np.uint16)
         })
         self.done = False
 
         self.reset()
 
     def step(self, action):
-        empty_dist = self.bin_dist(self.state['position'], action['source'])
-        task_dist = self.bin_dist(action['source'], action['destination'])
-
         self.state['position'] = action['destination']
-        self.state['time'][0] = self.state['time'][0] + action['time'][0]
+        self.state['time'][0] = self.state['time'][0] + action['time'][0] + ((action['dist_to_start'][0] + 1) / SPEED)
 
-        reward = IMMEDIATE_AWARD * task_dist - ALPHA * self.bin_dist(self.state['position'], action['source']) + action['vicinity'][0]
+        reward = (action['dist_to_start'][0] + action['mean_dist_to_next'][0]) * -1
 
         if self.state['time'][0] > EPISODE_LENGTH:
             self.done = True
 
-        return self.state, reward, self.done, { 'empty_dist': empty_dist }
+        return self.state, reward, self.done, { 'empty_dist': action['dist_to_start'][0] }
 
     def reset(self):
         self.state = {
