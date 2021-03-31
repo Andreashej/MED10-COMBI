@@ -47,7 +47,7 @@ class DQNAgent:
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
 
-    def get_features(self, state, action):
+    def get_features(self, action):
         # Normalise features to converge faster
         features = np.array([
             action.distance_to_start / self.max_dist,
@@ -56,11 +56,16 @@ class DQNAgent:
         
         return features.reshape(-1, *features.shape)
 
-    def get_qs(self, state, actions):
-        return np.array([self.get_q(state, action) for action in actions])
+    def get_qs(self, state, actions, update_dist=False):
+        return np.array([self.get_q(state, action, update_dist) for action in actions])
     
-    def get_q(self, state, action):
-        features = self.get_features(state, action)
+    def get_q(self, state, action, update_dist = False):
+        if update_dist:
+            binFrom = api.find_bin(state['position'])
+
+            action.distance_to_start = api.bin_dist_cached(binFrom, action.source)
+
+        features = self.get_features(action)
 
         return self.model.predict(features)
     
@@ -79,12 +84,12 @@ class DQNAgent:
             if not done:
                 # Compute the maximum Q based on the updated state and the available actions
                 # This is very slow - even with just 10 actions
-                max_future_q = np.max(self.get_qs(new_current_state, actions))
+                max_future_q = np.max(self.get_qs(new_current_state, actions, update_dist=True))
                 new_q = reward + DISCOUNT * max_future_q
             else:
                 new_q = reward
 
-            X.append(self.get_features(current_state, action))
+            X.append(self.get_features(action))
             Y.append(new_q)
 
         X = np.array(X).reshape((-1,2))
