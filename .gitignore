@@ -5,3 +5,4 @@ env/
 .vscode/
 logs/
 models/
+*.code-workspace
