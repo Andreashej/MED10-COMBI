@@ -35,6 +35,8 @@ if __name__ == '__main__':
 
     for episode in tqdm(range(1, EPISODES +1), ascii=True, unit='episodes'):
         agent.tensorboard.step = episode
+        tasklist.reset()
+        current_state = env.reset()
 
         episode_reward = 0
         episode_task_count = 0
@@ -43,6 +45,10 @@ if __name__ == '__main__':
         current_state = env.reset()
 
         done = False
+        if len(available_actions) == 0:
+            # If there are no actions available, idle for one minut
+            current_state['time'][0] += 60
+            continue
 
         while not done:
             available_actions = tasklist.get_available(10, env.state['position'], env.state['time'][0]) # Search for eligible actions
