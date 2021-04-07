@@ -16,7 +16,7 @@ class CombiApi:
   
   def load_csv(self):
     print("Loading BINs")
-    bins = []
+
     with open('data/BINS.csv', newline='', encoding='UTF-8') as csvfile:
       reader = list(csv.DictReader(csvfile, delimiter=";"))
 

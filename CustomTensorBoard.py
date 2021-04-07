@@ -1,17 +1,16 @@
 from tensorflow.keras.callbacks import TensorBoard
 import tensorflow as tf
 import os
-from config import MODEL_NAME
 
 # Own Tensorboard class
 class CustomTensorBoard(TensorBoard):
 
     # Overriding init to set initial step and writer (we want one log file for all .fit() calls)
-    def __init__(self, **kwargs):
+    def __init__(self, model_name, **kwargs):
         super().__init__(**kwargs)
         self.step = 1
         self.writer = tf.summary.create_file_writer(self.log_dir)
-        self._log_write_dir = os.path.join(self.log_dir, MODEL_NAME)
+        self._log_write_dir = os.path.join(self.log_dir, model_name)
 
     # Overriding this method to stop creating default log writer
     def set_model(self, model):

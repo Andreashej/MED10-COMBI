@@ -1,14 +1,11 @@
 
 # Environment settings
-EPISODES = 40_000
-MIN_REWARD = 0
+EPISODES = 500
 
 # Stats settings
 SHOW_PREVIEW = False
-AGGREGATE_STATS_EVERY = 10
 
 # Exploration settings
-EPSILON_DECAY = 0.99975
 MIN_EPSILON = 0.001
 
 # Agent settings
@@ -16,4 +13,3 @@ DISCOUNT = 0.99
 REPLAY_MEMORY_SIZE = 2000
 MINIBATCH_SIZE = 32
 UPDATE_TARGET_EVERY = 5
-MODEL_NAME = 'dqn'

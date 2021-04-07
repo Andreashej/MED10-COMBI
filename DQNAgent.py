@@ -1,42 +1,44 @@
 from CustomTensorBoard import CustomTensorBoard
 from collections import deque
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 import numpy as np
 import random
 import time
 
-from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE, UPDATE_TARGET_EVERY, MODEL_NAME
+from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
 
 from CombiApi import api
 
 class DQNAgent:
-    def __init__(self, feature_space_size):
-        self.model = self.create_model(feature_space_size)
+    def __init__(self, env, feature_space_size, setup):
+        self.env = env
 
-        self.target_model = self.create_model(feature_space_size)
+        self.model = self.create_model(feature_space_size, setup['network'])
+
+        self.target_model = self.create_model(feature_space_size, setup['network'])
         self.target_model.set_weights(self.model.get_weights())
 
         self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
 
-        self.tensorboard = CustomTensorBoard(log_dir=f"logs/{MODEL_NAME}-{int(time.time())}")
-
-        self.target_update_counter = 0
+        self.tensorboard = CustomTensorBoard(setup['model_name'], log_dir=f"logs/{setup['model_name']}-{int(time.time())}")
 
         self.max_dist = api.max_dist()
 
-    def create_model(self, input_dim):
+        self.eligible_actions = []
+
+        self.epsilon = 0.9
+        self.tau = 0.125
+
+    def create_model(self, input_dim, layers):
         model = Sequential()
 
-        model.add(Dense(12, activation='relu', input_dim=input_dim))
-        # model.add(Dropout(0.2))
-        
-        model.add(Dense(24, activation='relu'))
-        # model.add(Dropout(0.2))
-
-        model.add(Dense(12, activation='relu'))
-        # model.add(Dropout(0.2))
+        for i, node_count in enumerate(layers):
+            if i > 0:
+                model.add(Dense(node_count, activation='relu'))
+            else:
+                model.add(Dense(node_count, activation='relu', input_dim=input_dim))
 
         model.add(Dense(1, activation='linear'))
 
@@ -56,10 +58,10 @@ class DQNAgent:
         
         return features.reshape(-1, *features.shape)
 
-    def get_qs(self, state, actions, update_dist=False):
-        return np.array([self.get_q(state, action, update_dist) for action in actions])
+    def get_qs(self, state, actions, update_dist=False, network='main'):
+        return np.array([self.get_q(state, action, update_dist, network) for action in actions])
     
-    def get_q(self, state, action, update_dist = False):
+    def get_q(self, state, action, update_dist = False, network='main'):
         if update_dist:
             binFrom = api.find_bin(state['position'])
 
@@ -67,7 +69,28 @@ class DQNAgent:
 
         features = self.get_features(action)
 
+        if network == 'target':
+            return self.target_model.predict(features)
+
         return self.model.predict(features)
+    
+    def act(self):
+        self.eligible_actions = self.env.available_actions
+
+        if len(self.eligible_actions) == 0:
+            # If there are no actions available, idle for one minut
+            self.env.state['time'][0] += 60
+            return False
+
+        if np.random.random() > self.epsilon:
+            action_index = np.argmax(self.get_qs(self.env.state, self.eligible_actions))
+        else:
+            action_index = np.random.randint(0, len(self.eligible_actions))
+
+        action = self.eligible_actions[action_index]
+        action.done = True
+
+        return action
     
     def process_minibatch_sample(self, sample, actions):
         (current_state, action, reward, new_current_state, done) = sample
@@ -75,7 +98,7 @@ class DQNAgent:
         if not done:
             # Compute the maximum Q based on the updated state and the available actions
             # This is very slow - even with just 10 actions
-            max_future_q = np.max(self.get_qs(new_current_state, actions, update_dist=True))
+            max_future_q = np.max(self.get_qs(new_current_state, actions, update_dist=True, network='target'))
             new_q = reward + DISCOUNT * max_future_q
         else:
             new_q = reward
@@ -84,7 +107,7 @@ class DQNAgent:
 
         return features, new_q
     
-    def train(self, terminal_state, actions):
+    def train(self):
         if len(self.replay_memory) < MINIBATCH_SIZE:
             return
         
@@ -94,7 +117,7 @@ class DQNAgent:
         Y = []
 
         for sample in minibatch:
-            features, q  = self.process_minibatch_sample(sample, actions)
+            features, q  = self.process_minibatch_sample(sample, self.eligible_actions)
             X.append(features)
             Y.append(q)
 
@@ -102,10 +125,12 @@ class DQNAgent:
         Y = np.array(Y)
 
         self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)
+    
+    def target_train(self):
+        weights = self.model.get_weights()
+        target_weights = self.target_model.get_weights()
 
-        if terminal_state:
-            self.target_update_counter += 1
+        for i, weight in enumerate(weights):
+            target_weights[i] = weight * self.tau + target_weights[i] * (1 - self.tau)
         
-        if self.target_update_counter > UPDATE_TARGET_EVERY:
-            self.target_model.set_weights(self.model.get_weights())
-            self.target_update_counter = 0
+        self.target_model.set_weights(target_weights)
