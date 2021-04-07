@@ -83,6 +83,10 @@ class TaskList:
         speed = bins_moved / time_used
 
         return speed
+    
+    def reset(self):
+        for task in self.tasks:
+            task.done = False
 
 
 

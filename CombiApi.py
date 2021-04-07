@@ -17,7 +17,7 @@ class CombiApi:
   def load_csv(self):
     print("Loading BINs")
     bins = []
-    with open('data/BINS.csv', newline='') as csvfile:
+    with open('data/BINS.csv', newline='', encoding='UTF-8') as csvfile:
       reader = list(csv.DictReader(csvfile, delimiter=";"))
 
       for i, line in tqdm(enumerate(reader), ascii=True, total=len(reader), unit="line"):

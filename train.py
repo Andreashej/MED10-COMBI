@@ -32,6 +32,7 @@ for episode in tqdm(range(1, EPISODES +1), ascii=True, unit='episodes'):
     episode_task_count = 0
     step = 1
 
+    tasklist.reset()
     current_state = env.reset()
 
     done = False
@@ -41,14 +42,7 @@ for episode in tqdm(range(1, EPISODES +1), ascii=True, unit='episodes'):
 
         if len(available_actions) == 0:
             # If there are no actions available, idle for one minut
-            new_state, reward, done, info = env.step({
-                'source': env.state['position'],
-                'destination': env.state['position'],
-                'time': [60],
-                'dist_to_start': [0],
-                'mean_dist_to_next': [0]
-            })
-            current_state = new_state
+            current_state['time'][0] += 60
             continue
 
         if np.random.random() > epsilon:

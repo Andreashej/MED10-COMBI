@@ -2,11 +2,12 @@ import gym
 from gym import spaces
 import numpy as np
 import random
+from CombiApi import api
 
 IMMEDIATE_AWARD = 100 # Reward for completing a task
 ALPHA = 1 # Blend factor for how much travelling empty is penalised
 EPISODE_LENGTH = 36000 # Seconds
-SPEED = .5 # Used to estimate the time it takes to move to the start of a task, unit is BIN_DIST/s
+SPEED = 2 # Used to estimate the time it takes to move to the start of a task, unit is BIN_DIST/s
 
 class CombiEnv(gym.Env):
 
