@@ -69,28 +69,34 @@ class DQNAgent:
 
         return self.model.predict(features)
     
+    def process_minibatch_sample(self, sample, actions):
+        (current_state, action, reward, new_current_state, done) = sample
+
+        if not done:
+            # Compute the maximum Q based on the updated state and the available actions
+            # This is very slow - even with just 10 actions
+            max_future_q = np.max(self.get_qs(new_current_state, actions, update_dist=True))
+            new_q = reward + DISCOUNT * max_future_q
+        else:
+            new_q = reward
+
+        features = self.get_features(action)
+
+        return features, new_q
+    
     def train(self, terminal_state, actions):
         if len(self.replay_memory) < MINIBATCH_SIZE:
             return
         
-        minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)
-
-        # future_qs_list = np.array([self.get_q(transition[3], transition[1]) for transition in minibatch])
+        minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)   
 
         X = []
         Y = []
 
-        for (current_state, action, reward, new_current_state, done) in minibatch:
-            if not done:
-                # Compute the maximum Q based on the updated state and the available actions
-                # This is very slow - even with just 10 actions
-                max_future_q = np.max(self.get_qs(new_current_state, actions, update_dist=True))
-                new_q = reward + DISCOUNT * max_future_q
-            else:
-                new_q = reward
-
-            X.append(self.get_features(action))
-            Y.append(new_q)
+        for sample in minibatch:
+            features, q  = self.process_minibatch_sample(sample, actions)
+            X.append(features)
+            Y.append(q)
 
         X = np.array(X).reshape((-1,2))
         Y = np.array(Y)
