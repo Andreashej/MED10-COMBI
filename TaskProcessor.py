@@ -213,3 +213,7 @@ class TaskImporter:
                 break
         
         return matches
+    
+    def users(self):
+        for task in self.tasks:
+            print(task.temp_bin)
