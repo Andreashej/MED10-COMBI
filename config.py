@@ -1,6 +1,6 @@
 
 # Environment settings
-EPISODES = 500
+EPISODES = 5000
 
 # Stats settings
 SHOW_PREVIEW = False

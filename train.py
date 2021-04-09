@@ -47,7 +47,6 @@ def train(setup = DEFAULT_CONFIG):
         done = False
 
         while not done:
-            step_start = time.perf_counter()
             action = agent.act()
 
             if not action:
@@ -74,9 +73,6 @@ def train(setup = DEFAULT_CONFIG):
             if agent.epsilon > MIN_EPSILON:
                 agent.epsilon *= setup['epsilon_decay']
                 agent.epsilon = max(MIN_EPSILON, agent.epsilon)
-            
-            step_stop = time.perf_counter()
-            print(f"Step completed in {step_stop - step_start} seconds")
 
         agent.tensorboard.update_stats(
             episode_reward=episode_reward,
@@ -89,6 +85,8 @@ def train(setup = DEFAULT_CONFIG):
             agent.model.save(f'models/{setup["model_name"]}__{episode_reward}reward__{int(time.time())}.model')
 
         ep_rewards.append(episode_reward)
+
+    return f"Finished training for {setup['model_name']}"
 
 if __name__ == '__main__':
     train()

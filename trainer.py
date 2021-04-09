@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from concurrent.futures import ProcessPoolExecutor
 from train import train
 
 setups = [
@@ -47,8 +47,8 @@ setups = [
 ]
 
 if __name__ == '__main__':
-    processes = []
+    with ProcessPoolExecutor() as executor:
+        results = executor.map(train, setups)
 
-    for setup in setups:
-        process = Process(target=train, args=(setup,))
-        process.start()
+        for result in results:
+            print(result)
