@@ -8,8 +8,17 @@ import os
 import time
 from config import SHOW_PREVIEW, MIN_EPSILON, EPISODES
 from CombiApi import api
+import time
 
-def train(setup):
+DEFAULT_CONFIG = { # Default config for comparison
+        'model_name': 'Config1',
+        'network': [12, 24, 12],
+        'speed': 2,
+        'epsilon_decay': 0.99975,
+        'reward': None
+    }
+
+def train(setup = DEFAULT_CONFIG):
     random.seed(1)
     np.random.seed(1)
     tf.random.set_seed(1)
@@ -38,6 +47,7 @@ def train(setup):
         done = False
 
         while not done:
+            step_start = time.perf_counter()
             action = agent.act()
 
             if not action:
@@ -64,6 +74,9 @@ def train(setup):
             if agent.epsilon > MIN_EPSILON:
                 agent.epsilon *= setup['epsilon_decay']
                 agent.epsilon = max(MIN_EPSILON, agent.epsilon)
+            
+            step_stop = time.perf_counter()
+            print(f"Step completed in {step_stop - step_start} seconds")
 
         agent.tensorboard.update_stats(
             episode_reward=episode_reward,

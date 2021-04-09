@@ -6,6 +6,7 @@ from tensorflow.keras.optimizers import Adam
 import numpy as np
 import random
 import time
+from concurrent.futures import ProcessPoolExecutor
 
 from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
 
@@ -59,7 +60,20 @@ class DQNAgent:
         return features.reshape(-1, *features.shape)
 
     def get_qs(self, state, actions, update_dist=False, network='main'):
-        return np.array([self.get_q(state, action, update_dist, network) for action in actions])
+        features = []
+
+        for action in actions:
+            if update_dist:
+                binFrom = api.find_bin(state['position'])
+
+                action.distance_to_start = api.bin_dist_cached(binFrom, action.source)
+            
+            features.append(self.get_features(action))
+
+        if network == 'target':
+            return self.target_model.predict_on_batch(np.array(features))
+        
+        return self.model.predict_on_batch(np.array(features))
     
     def get_q(self, state, action, update_dist = False, network='main'):
         if update_dist:
