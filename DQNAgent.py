@@ -127,10 +127,4 @@ class DQNAgent:
         self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)
     
     def target_train(self):
-        weights = self.model.get_weights()
-        target_weights = self.target_model.get_weights()
-
-        for i, weight in enumerate(weights):
-            target_weights[i] = weight * self.tau + target_weights[i] * (1 - self.tau)
-        
-        self.target_model.set_weights(target_weights)
+        self.target_model.set_weights(self.model.get_weights())
