@@ -40,6 +40,7 @@ def train(setup):
         done = False
 
         while not done:
+            step_start = time.perf_counter()
             action = agent.act()
 
             if not action:
@@ -66,6 +67,9 @@ def train(setup):
             if agent.epsilon > MIN_EPSILON:
                 agent.epsilon *= setup['epsilon_decay']
                 agent.epsilon = max(MIN_EPSILON, agent.epsilon)
+            step_end = time.perf_counter()
+
+            print(f"Step completed in {step_end - step_start} seconds")
 
         agent.tensorboard.update_stats(
             episode_reward=episode_reward,

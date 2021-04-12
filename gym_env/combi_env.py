@@ -1,3 +1,4 @@
+from threading import current_thread
 import gym
 from gym import spaces
 import numpy as np
@@ -26,11 +27,19 @@ class CombiEnv(gym.Env):
         self.SPEED = setup['speed'] # Used to estimate the time it takes to move to the start of a task, unit is BIN_DIST/s
         self.REWARD = setup['reward'] # Pass in a custom reward function that takes the action as input
 
+        self.last_minute = 0
+
         self.reset()
 
     def step(self, action):
         self.state['position'] = action['destination']
         self.state['time'][0] = self.state['time'][0] + action['time'][0] + ((action['dist_to_start'][0] + 1) / self.SPEED)
+        
+        current_minute = (self.state['time'][0] / 60) % 30
+
+        if current_minute < self.last_minute:
+            self.tasklist.spawn(self.state['time'][0], 30)
+            self.last_minute = current_minute
 
         if not self.REWARD:
             reward = (action['dist_to_start'][0] + action['mean_dist_to_next'][0]) * -1
@@ -48,6 +57,7 @@ class CombiEnv(gym.Env):
             'time': [0]
         }
         self.done = False
+        self.last_minute = 0
         self.tasklist.reset()
 
         return self.state
@@ -55,6 +65,11 @@ class CombiEnv(gym.Env):
     def render(self, mode='human', close=False):
         print (f"I am now at BIN {self.state['position']}. The time is {self.state['time'][0 ]}.")
 
-    @property
-    def available_actions(self):
-        return self.tasklist.get_available(10, self.state['position'], self.state['time'][0])
+    def get_available_actions(self, position = None, time = None):
+        if not position:
+            position = self.state['position']
+        
+        if not time:
+            time = self.state['time'][0]
+
+        return self.tasklist.get_available(position, time)

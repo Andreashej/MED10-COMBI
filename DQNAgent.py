@@ -6,7 +6,6 @@ from tensorflow.keras.optimizers import Adam
 import numpy as np
 import random
 import time
-from concurrent.futures import ProcessPoolExecutor
 
 from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
 
@@ -59,40 +58,16 @@ class DQNAgent:
         
         return features.reshape(-1, *features.shape)
 
-    def get_qs(self, state, actions, update_dist=False, network='main'):
-        features = []
-
-        for action in actions:
-            if update_dist:
-                binFrom = api.find_bin(state['position'])
-
-                action.distance_to_start = api.bin_dist_cached(binFrom, action.source)
-            
-            features.append(self.get_features(action))
-        
-        features = np.array(features)
-        features = features.reshape(-1, 2)
+    def get_qs(self, state, actions, network='main'):
+        features = np.array([self.get_features(action) for action in actions]).reshape(-1,2)
 
         if network == 'target':
             return self.target_model.predict_on_batch(features)
         
         return self.model.predict_on_batch(features)
     
-    def get_q(self, state, action, update_dist = False, network='main'):
-        if update_dist:
-            binFrom = api.find_bin(state['position'])
-
-            action.distance_to_start = api.bin_dist_cached(binFrom, action.source)
-
-        features = self.get_features(action)
-
-        if network == 'target':
-            return self.target_model.predict(features)
-
-        return self.model.predict(features)
-    
     def act(self):
-        self.eligible_actions = self.env.available_actions
+        self.eligible_actions = self.env.get_available_actions()
 
         if len(self.eligible_actions) == 0:
             # If there are no actions available, idle for one minut
@@ -109,13 +84,15 @@ class DQNAgent:
 
         return action
     
-    def process_minibatch_sample(self, sample, actions):
+    def process_minibatch_sample(self, sample):
         (current_state, action, reward, new_current_state, done) = sample
+
+        actions = self.env.get_available_actions(api.find_index(action.destination.id))
 
         if not done:
             # Compute the maximum Q based on the updated state and the available actions
             # This is very slow - even with just 10 actions
-            max_future_q = np.max(self.get_qs(new_current_state, actions, update_dist=True, network='target'))
+            max_future_q = np.max(self.get_qs(new_current_state, actions, network='target'))
             new_q = reward + DISCOUNT * max_future_q
         else:
             new_q = reward
@@ -134,7 +111,7 @@ class DQNAgent:
         Y = []
 
         for sample in minibatch:
-            features, q  = self.process_minibatch_sample(sample, self.eligible_actions)
+            features, q  = self.process_minibatch_sample(sample)
             X.append(features)
             Y.append(q)
 

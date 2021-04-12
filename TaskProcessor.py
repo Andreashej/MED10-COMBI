@@ -10,6 +10,8 @@ class TaskList:
 
     def __init__(self):
         self.tasks = []
+        self.spawned_tasks = []
+        self.start_index = 0
         self.first_time_started_at = None
         self.load_csv()
 
@@ -45,14 +47,26 @@ class TaskList:
     def sample(self, amount):
         return random.sample(self.tasks, amount)
     
-    def get_available(self, amount, current_position, current_time, sample_size=0.1):
+    def spawn(self, current_time, lookahead):
+        current_timestamp = self.first_time_started_at + timedelta(seconds=current_time)
+
+        for task in self.tasks[self.start_index:]:
+            if task not in self.spawned_tasks and current_timestamp + timedelta(minutes=lookahead) > task.started_at:
+                if len(self.spawned_tasks) == 0:
+                    self.first_time_started_at = task.started_at
+
+                self.spawned_tasks.append(task)
+            else:
+                break
+        
+    def get_available(self, current_position, current_time, sample_size=0.1):
         available_tasks = []
 
         current_timestamp = self.first_time_started_at + timedelta(seconds=current_time)
         current_bin = api.find_bin(current_position)
 
-        for i, task in enumerate(self.tasks):
-            if len(available_tasks) <= amount and not task.done and task.started_at > current_timestamp:
+        for task in self.spawned_tasks:
+            if not task.done and task.started_at > current_timestamp:
                 task.distance_to_start = api.bin_dist_cached(current_bin, task.source)
                 available_tasks.append(task)
         
@@ -85,8 +99,18 @@ class TaskList:
         return speed
     
     def reset(self):
-        for task in self.tasks:
+        start_time_seconds = random.randint(0,50400)
+        start_index = 0
+
+        for i, task in enumerate(self.tasks):
+            start_time = self.tasks[0].started_at + timedelta(seconds=start_time_seconds)
+            if task.started_at > start_time and start_index == 0:
+                start_index = i
+
             task.done = False
+        
+        self.start_index = start_index
+        self.spawn(start_time_seconds, 30)
 
 
 
@@ -100,6 +124,7 @@ class Task:
         self.temp_bin = kwargs.get('temp_bin')
         self.time = kwargs.get('time')
         self.distance = api.bin_dist_cached(self.source, self.destination)
+        self.hasSpawned = False
         self.done = False
         self.distance_to_start = None
         self.mean_distance_to_next = None
