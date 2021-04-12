@@ -9,16 +9,9 @@ import time
 from config import SHOW_PREVIEW, MIN_EPSILON, EPISODES
 from CombiApi import api
 import time
+from tests import setups
 
-DEFAULT_CONFIG = { # Default config for comparison
-        'model_name': 'Config1',
-        'network': [12, 24, 12],
-        'speed': 2,
-        'epsilon_decay': 0.99975,
-        'reward': None
-    }
-
-def train(setup = DEFAULT_CONFIG):
+def train(setup):
     random.seed(1)
     np.random.seed(1)
     tf.random.set_seed(1)
@@ -91,4 +84,6 @@ def train(setup = DEFAULT_CONFIG):
         ep_rewards.append(episode_reward)
 
 if __name__ == '__main__':
-    train()
+    config = int(input("What config would you like? "))
+
+    train(setups[config - 1])

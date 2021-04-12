@@ -1,6 +1,3 @@
-from multiprocessing import Process
-from train import train
-
 setups = [
     { # Default config for comparison
         'model_name': 'Config1',
@@ -45,10 +42,3 @@ setups = [
         'reward': None
     },
 ]
-
-if __name__ == '__main__':
-    processes = []
-
-    for setup in setups:
-        process = Process(target=train, args=(setup,))
-        process.start()
