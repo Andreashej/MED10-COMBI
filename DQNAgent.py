@@ -6,8 +6,11 @@ from tensorflow.keras.optimizers import Adam
 import numpy as np
 import random
 import time
+from concurrent.futures import ProcessPoolExecutor
+from itertools import repeat
 
 from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
+from AsyncAgent import get_batch_features
 
 from CombiApi import api
 
@@ -105,19 +108,46 @@ class DQNAgent:
         if len(self.replay_memory) < MINIBATCH_SIZE:
             return
         
-        minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)   
+        minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)
 
         X = []
         Y = []
 
-        for sample in minibatch:
-            features, q  = self.process_minibatch_sample(sample)
-            X.append(features)
-            Y.append(q)
+        all_features = []
 
-        X = np.array(X).reshape((-1,2))
+        number_of_actions = None
+
+        args = [(sample, self.env) for sample in minibatch]
+
+        with ProcessPoolExecutor() as executor:
+            for features in executor.map(get_batch_features, args):
+                number_of_actions = len(features) if number_of_actions is None else number_of_actions
+
+                all_features.append(features)
+
+        all_features = np.array(all_features).reshape((-1,2))
+
+        targets = self.target_model.predict_on_batch(all_features)
+        
+        for i, sample in enumerate(minibatch):
+            (current_state, action, reward, new_current_state, done) = sample
+
+            start_index = i * number_of_actions
+            end_index = start_index + number_of_actions
+
+            qs = targets[start_index:end_index]
+
+            max_future_q = reward
+
+            if not done:
+                max_q = np.max(qs)
+                max_future_q += DISCOUNT * max_q
+
+            X.append(self.get_features(action))
+            Y.append(max_future_q)
+
+        X = np.array(X).reshape(-1,2)
         Y = np.array(Y)
-
         self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)
     
     def target_train(self):
