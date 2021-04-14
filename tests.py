@@ -32,7 +32,7 @@ setups = [
         'network': [12, 24, 12],
         'speed': 2,
         'epsilon_decay': 0.99975,
-        'reward': lambda action : (action['dist_to_start'][0] + 0.5 * action['mean_dist_to_next'][0])
+        'reward': lambda action : (action['dist_to_start'][0] + 0.5 * action['mean_dist_to_next'][0]) * -1
     },
     { # Slower decay
         'model_name': 'Config6',
@@ -40,5 +40,12 @@ setups = [
         'speed': 2,
         'epsilon_decay': 0.99999,
         'reward': None
+    },
+    { # Larger reward for completing a task
+        'model_name': 'Config7',
+        'network': [12, 24, 12],
+        'speed': 2,
+        'epsilon_decay': 0.99999,
+        'reward': lambda action : 1000 - (action['dist_to_start'][0] + action['mean_dist_to_next'][0])
     },
 ]
