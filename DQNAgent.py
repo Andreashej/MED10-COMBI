@@ -6,11 +6,8 @@ from tensorflow.keras.optimizers import Adam
 import numpy as np
 import random
 import time
-from concurrent.futures import ProcessPoolExecutor
-from itertools import repeat
 
 from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
-from AsyncAgent import get_batch_features
 
 from CombiApi import api
 
@@ -104,6 +101,13 @@ class DQNAgent:
 
         return features, new_q
     
+    def get_batch_features(self, sample):
+        (current_state, action, reward, new_current_state, done) = sample
+
+        actions = self.env.get_available_actions(api.find_index(action.destination.id))
+
+        return [self.get_features(action) for action in actions]
+    
     def train(self):
         if len(self.replay_memory) < MINIBATCH_SIZE:
             return
@@ -117,17 +121,16 @@ class DQNAgent:
 
         number_of_actions = None
 
-        args = [(sample, self.env) for sample in minibatch]
+        for sample in minibatch:
+            features = self.get_batch_features(sample)
 
-        with ProcessPoolExecutor() as executor:
-            for features in executor.map(get_batch_features, args):
-                number_of_actions = len(features) if number_of_actions is None else number_of_actions
+            number_of_actions = len(features) if number_of_actions is None else number_of_actions
 
-                all_features.append(features)
+            all_features.append(features)
 
         all_features = np.array(all_features).reshape((-1,2))
 
-        targets = self.target_model.predict_on_batch(all_features)
+        targets = self.target_model.predict(all_features)
         
         for i, sample in enumerate(minibatch):
             (current_state, action, reward, new_current_state, done) = sample

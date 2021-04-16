@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import os
 import time
-from config import SHOW_PREVIEW, MIN_EPSILON, EPISODES
+from config import SHOW_PREVIEW, MIN_EPSILON, EPISODES, UPDATE_TARGET_EVERY
 from CombiApi import api
 import time
 from tests import setups
@@ -59,7 +59,9 @@ def train(setup):
             agent.update_replay_memory((current_state, action, reward, new_state, done))
 
             agent.train()
-            agent.target_train()
+
+            if step % UPDATE_TARGET_EVERY == 0:
+                agent.target_train()
 
             current_state = new_state
             step += 1
