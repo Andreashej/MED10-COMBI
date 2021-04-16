@@ -41,11 +41,18 @@ setups = [
         'epsilon_decay': 0.99999,
         'reward': None
     },
-    { # Larger reward for completing a task
+    { # Larger reward for completing a task with smaller epsilon decay
         'model_name': 'Config7',
         'network': [12, 24, 12],
         'speed': 2,
         'epsilon_decay': 0.99999,
+        'reward': lambda action : 1000 - (action['dist_to_start'][0] + action['mean_dist_to_next'][0])
+    },
+    { # Larger reward for completing a task
+        'model_name': 'Config8',
+        'network': [12, 24, 12],
+        'speed': 2,
+        'epsilon_decay': 0.99975,
         'reward': lambda action : 1000 - (action['dist_to_start'][0] + action['mean_dist_to_next'][0])
     },
 ]
