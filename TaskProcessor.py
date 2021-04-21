@@ -4,6 +4,7 @@ from tqdm import tqdm
 from datetime import datetime, time, timedelta
 import random
 from CombiApi import api
+import numpy as np
 
 class TaskList:
     DATE_FORMAT = '%d.%m.%Y %H:%M:%S'
@@ -59,7 +60,7 @@ class TaskList:
             else:
                 break
         
-    def get_available(self, current_position, current_time, sample_size=0.1):
+    def get_available(self, current_position, current_time, sample_size=0.5):
         available_tasks = []
 
         current_timestamp = self.first_time_started_at + timedelta(seconds=current_time)
@@ -69,15 +70,19 @@ class TaskList:
             if not task.done and task.started_at > current_timestamp:
                 task.distance_to_start = api.bin_dist_cached(current_bin, task.source)
                 available_tasks.append(task)
+
+        available_tasks = random.sample(available_tasks, 20)
         
         for task in available_tasks:
-            samples = max(int(len(available_tasks) * sample_size),1)
-            sample = random.sample(available_tasks, samples)
-
             mean_dist = 0
-            for s in sample:
-                mean_dist += api.bin_dist_cached(task.destination, s.source)
-            mean_dist /= len(sample)
+            number = int(len(available_tasks) * sample_size)
+            dists = []
+            for s in random.sample(available_tasks, number):
+                dists.append(api.bin_dist_cached(task.destination, s.source))
+
+            dists = np.array(dists)
+            dists.sort()
+            mean_dist = np.mean(dists[:5])
 
             task.mean_distance_to_next = mean_dist
         
