@@ -104,9 +104,12 @@ class DQNAgent:
     def get_batch_features(self, sample):
         (current_state, action, reward, new_current_state, done) = sample
 
-        actions = self.env.get_available_actions(api.find_index(action.destination.id))
+        features = []
+        for a in self.eligible_actions.copy():
+            a.distance_to_start = api.bin_dist_cached(action.destination, a.source)
+            features.append(self.get_features(a))
 
-        return [self.get_features(action) for action in actions]
+        return features
     
     def train(self):
         if len(self.replay_memory) < MINIBATCH_SIZE:

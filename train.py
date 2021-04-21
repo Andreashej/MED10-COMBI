@@ -71,7 +71,7 @@ def train(setup):
                 agent.epsilon = max(MIN_EPSILON, agent.epsilon)
             step_end = time.perf_counter()
 
-            print(f"Step completed in {step_end - step_start} seconds")
+            # print(f"Step completed in {step_end - step_start} seconds")
 
         agent.tensorboard.update_stats(
             episode_reward=episode_reward,

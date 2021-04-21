@@ -25,7 +25,10 @@ class CombiEnv(gym.Env):
 
         self.EPISODE_LENGTH = shift_length # Seconds - defaults to 36000 = 10 hours
         self.SPEED = setup['speed'] # Used to estimate the time it takes to move to the start of a task, unit is BIN_DIST/s
-        self.REWARD = setup['reward'] # Pass in a custom reward function that takes the action as input
+
+        self.R_I = setup['I'] # Reward for completing a task
+        self.R_ALPHA = setup['alpha'] # Weight for dist_to_start in reward
+        self.R_BETA = setup['beta'] # Weight for mean_dist_to_next
 
         self.last_minute = 0
 
@@ -41,10 +44,7 @@ class CombiEnv(gym.Env):
             self.tasklist.spawn(self.state['time'][0], 30)
             self.last_minute = current_minute
 
-        if not self.REWARD:
-            reward = (action['dist_to_start'][0] + action['mean_dist_to_next'][0]) * -1
-        else:
-            reward = self.REWARD(action)
+        reward = self.R_I - (self.R_ALPHA * action['dist_to_start'][0] + self.R_BETA * action['mean_dist_to_next'][0])
 
         if self.state['time'][0] > self.EPISODE_LENGTH:
             self.done = True

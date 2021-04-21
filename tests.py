@@ -1,58 +1,67 @@
+EPSILON_DECAY = 0.99985
+
 setups = [
     { # Default config for comparison
         'model_name': 'Config1',
         'network': [12, 24, 12],
         'speed': 2,
-        'epsilon_decay': 0.99975,
-        'reward': None
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 0,
+        'alpha': 1,
+        'beta': 1
     },
     { # Low nodecount in the network
         'model_name': 'Config2',
         'network': [3, 6, 3],
         'speed': 2,
-        'epsilon_decay': 0.99975,
-        'reward': None,
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 0,
+        'alpha': 1,
+        'beta': 1
     },
-    { # Moves faster
+    { # Deeper network
         'model_name': 'Config3',
-        'network': [12, 24, 12],
-        'speed': 8,
-        'epsilon_decay': 0.99975,
-        'reward': None
+        'network': [12, 24, 6, 24, 12],
+        'speed': 2,
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 0,
+        'alpha': 1,
+        'beta': 1
+    },
+    { # Deeper network
+        'model_name': 'Config4',
+        'network': [32, 64, 32],
+        'speed': 2,
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 0,
+        'alpha': 1,
+        'beta': 1
     },
     { # Try with a small positive reward for completing the action
-        'model_name': 'Config4',
-        'network': [12, 24, 12],
-        'speed': 2,
-        'epsilon_decay': 0.99975,
-        'reward': lambda action : 100 - (action['dist_to_start'][0] + action['mean_dist_to_next'][0])
-    },
-    { # Give a smaller weight to mean_dist_to_next and favor tasks closer to the worker
         'model_name': 'Config5',
         'network': [12, 24, 12],
         'speed': 2,
-        'epsilon_decay': 0.99975,
-        'reward': lambda action : (action['dist_to_start'][0] + 0.5 * action['mean_dist_to_next'][0]) * -1
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 100,
+        'alpha': 1,
+        'beta': 1
     },
-    { # Slower decay
+    { # Give a smaller weight to mean_dist_to_next and favor tasks closer to the worker
         'model_name': 'Config6',
         'network': [12, 24, 12],
         'speed': 2,
-        'epsilon_decay': 0.99999,
-        'reward': None
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 0,
+        'alpha': 1,
+        'beta': 0.5
     },
-    { # Larger reward for completing a task with smaller epsilon decay
+    { # Large positive reward for finishing
         'model_name': 'Config7',
         'network': [12, 24, 12],
         'speed': 2,
-        'epsilon_decay': 0.99999,
-        'reward': lambda action : 1000 - (action['dist_to_start'][0] + action['mean_dist_to_next'][0])
-    },
-    { # Larger reward for completing a task
-        'model_name': 'Config8',
-        'network': [12, 24, 12],
-        'speed': 2,
-        'epsilon_decay': 0.99975,
-        'reward': lambda action : 1000 - (action['dist_to_start'][0] + action['mean_dist_to_next'][0])
-    },
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 1000,
+        'alpha': 1,
+        'beta': 1
+    }
 ]
