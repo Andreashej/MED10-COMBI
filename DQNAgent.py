@@ -3,6 +3,7 @@ from collections import deque
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import load_model
 import numpy as np
 import random
 import time
@@ -12,17 +13,21 @@ from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
 from CombiApi import api
 
 class DQNAgent:
-    def __init__(self, env, feature_space_size, setup):
+    def __init__(self, env, feature_space_size, setup, model = None):
         self.env = env
+        
+        if model:
+            self.model = load_model(f"models/{model}")
+        else:
+            self.model = self.create_model(feature_space_size, setup['network'])
 
-        self.model = self.create_model(feature_space_size, setup['network'])
 
-        self.target_model = self.create_model(feature_space_size, setup['network'])
-        self.target_model.set_weights(self.model.get_weights())
+            self.target_model = self.create_model(feature_space_size, setup['network'])
+            self.target_model.set_weights(self.model.get_weights())
 
-        self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
+            self.replay_memory = deque(maxlen=REPLAY_MEMORY_SIZE)
 
-        self.tensorboard = CustomTensorBoard(setup['model_name'], log_dir=f"logs/{setup['model_name']}-{int(time.time())}")
+            self.tensorboard = CustomTensorBoard(setup['model_name'], log_dir=f"logs/{setup['model_name']}-{int(time.time())}")
 
         self.max_dist = api.max_dist()
 
