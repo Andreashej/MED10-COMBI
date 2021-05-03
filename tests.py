@@ -28,7 +28,7 @@ setups = [
         'alpha': 1,
         'beta': 1
     },
-    { # Deeper network
+    { # Higher nodecount
         'model_name': 'Config4',
         'network': [32, 64, 32],
         'speed': 2,
@@ -39,7 +39,7 @@ setups = [
     },
     { # Try with a small positive reward for completing the action
         'model_name': 'Config5',
-        'network': [12, 24, 12],
+        'network': [3, 6, 3],
         'speed': 2,
         'epsilon_decay': EPSILON_DECAY,
         'I': 100,
@@ -48,7 +48,7 @@ setups = [
     },
     { # Give a smaller weight to mean_dist_to_next and favor tasks closer to the worker
         'model_name': 'Config6',
-        'network': [12, 24, 12],
+        'network': [3, 6, 3],
         'speed': 2,
         'epsilon_decay': EPSILON_DECAY,
         'I': 0,
@@ -57,11 +57,20 @@ setups = [
     },
     { # Large positive reward for finishing
         'model_name': 'Config7',
-        'network': [12, 24, 12],
+        'network': [3, 6, 3],
         'speed': 2,
         'epsilon_decay': EPSILON_DECAY,
         'I': 1000,
         'alpha': 1,
         'beta': 1
-    }
+    },
+    { # Smaller weight on agent - task distance
+        'model_name': 'Config8',
+        'network': [3, 6, 3],
+        'speed': 2,
+        'epsilon_decay': EPSILON_DECAY,
+        'I': 0,
+        'alpha': 0.5,
+        'beta': 1
+    },
 ]

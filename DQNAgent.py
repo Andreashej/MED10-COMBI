@@ -7,7 +7,7 @@ import numpy as np
 import random
 import time
 
-from config import DISCOUNT, REPLAY_MEMORY_SIZE, MINIBATCH_SIZE
+from config import DISCOUNT, REPLAY_MEMORY_SIZE
 
 from CombiApi import api
 
@@ -29,7 +29,7 @@ class DQNAgent:
         self.eligible_actions = []
 
         self.epsilon = 0.9
-        self.tau = 0.125
+        self.MINIBATCH_SIZE = setup['batch_size'] if 'batch_size' in setup else 32
 
     def create_model(self, input_dim, layers):
         model = Sequential()
@@ -112,10 +112,10 @@ class DQNAgent:
         return features
     
     def train(self):
-        if len(self.replay_memory) < MINIBATCH_SIZE:
+        if len(self.replay_memory) < self.MINIBATCH_SIZE:
             return
         
-        minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)
+        minibatch = random.sample(self.replay_memory, self.MINIBATCH_SIZE)
 
         X = []
         Y = []
@@ -154,7 +154,7 @@ class DQNAgent:
 
         X = np.array(X).reshape(-1,2)
         Y = np.array(Y)
-        self.model.fit(X, Y, batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)
+        self.model.fit(X, Y, batch_size=self.MINIBATCH_SIZE, verbose=0, shuffle=False, epochs=1)
     
     def target_train(self):
         self.target_model.set_weights(self.model.get_weights())

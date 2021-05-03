@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import os
 import time
-from config import SHOW_PREVIEW, MIN_EPSILON, EPISODES, UPDATE_TARGET_EVERY
+from config import SHOW_PREVIEW, MIN_EPSILON, EPISODES, UPDATE_TARGET_EVERY, AGGREGATE_STATS_EVERY
 from CombiApi import api
 import time
 from tests import setups
@@ -20,6 +20,8 @@ def train(setup):
         os.makedirs('models')
 
     ep_rewards = []
+    ep_completed_tasks = []
+    ep_empty_dist = []
 
     env = CombiEnv(api.size(), setup)
     agent = DQNAgent(env, 2, setup)
@@ -73,17 +75,39 @@ def train(setup):
 
             # print(f"Step completed in {step_end - step_start} seconds")
 
-        agent.tensorboard.update_stats(
-            episode_reward=episode_reward,
-            epsilon=agent.epsilon,
-            completed_tasks=extra_stats['completed_tasks'],
-            empty_dist=extra_stats['empty_dist']
-        )
+        ep_rewards.append(episode_reward)
+        ep_completed_tasks.append(extra_stats['completed_tasks'])
+        ep_empty_dist.append(extra_stats['empty_dist'])
+
+        if episode % AGGREGATE_STATS_EVERY == 0 or episode == 1:
+            if episode == 1:
+                mean_reward = ep_rewards[0]
+                min_reward = mean_reward
+                max_reward = mean_reward
+                mean_episode_completed = ep_completed_tasks[0]
+                mean_empty_dist = ep_empty_dist[0]
+            else:
+                episode_rewards = ep_rewards[episode - AGGREGATE_STATS_EVERY : episode]
+                mean_reward = sum(episode_rewards) / len(episode_rewards)
+                min_reward = min(episode_rewards)
+                max_reward = max(episode_rewards)
+
+                episode_completed = ep_completed_tasks[episode - AGGREGATE_STATS_EVERY : episode]
+                mean_episode_completed = sum(episode_completed) / len(episode_completed)
+
+                episode_empty_dist = ep_empty_dist[episode - AGGREGATE_STATS_EVERY : episode]
+                mean_empty_dist = sum(episode_empty_dist) / len(episode_empty_dist)
+
+            agent.tensorboard.update_stats(
+                reward=mean_reward,
+                min_reward=min_reward,
+                max_reward=max_reward,
+                completed_tasks=mean_episode_completed,
+                empty_distance=mean_empty_dist
+            )
 
         if len(ep_rewards) > 0 and episode_reward > max(ep_rewards):
             agent.model.save(f'models/{setup["model_name"]}__{episode_reward}reward__{int(time.time())}.model')
-
-        ep_rewards.append(episode_reward)
 
     return f"Finished training for {setup['model_name']}"
 

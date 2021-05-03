@@ -4,6 +4,7 @@ EPISODES = 5000
 
 # Stats settings
 SHOW_PREVIEW = False
+AGGREGATE_STATS_EVERY = 50
 
 # Exploration settings
 MIN_EPSILON = 0.001
